@@ -26,10 +26,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Set TEST environment variable
+        run: echo "TEST=OK" >> $GITHUB_ENV
+
       # Run fake tests
       - name: Run fake tests
         run: |
-          echo "TEST=OK" >> $GITHUB_ENV
           python -m pytest tests.py 
 
       # Build Docker images for the frontend and backend and tag them with the Git commit SHA
