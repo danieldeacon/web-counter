@@ -1,0 +1,66 @@
+services:
+  webcounter-backend:
+    # Implement the backend
+    #image: danieldeaconumuzi/webcounter-backend:latest
+    build:
+      context: .
+      dockerfile: backend.dockerfile
+    environment:
+      DB_NAME: countdb
+      DB_USER: mary
+      DB_PASSWORD: 123456A!
+      DB_HOST: webcounter-db
+    depends_on:
+      - webcounter-db
+    networks:
+      - webcounter-network
+    ports:
+      - "5000:5000"
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/api/pressed"]
+      interval: 30s
+      timeout: 10s
+      retries: 3 
+
+  webcounter-frontend:
+    #image: danieldeaconumuzi/webcounter-frontend:latest
+    build:
+      context: .
+      dockerfile: frontend.dockerfile
+    depends_on:
+      - webcounter-backend
+      - webcounter-db
+    networks:
+      - webcounter-network
+    ports:
+      - "80:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+        
+  webcounter-db:
+    # Implement the database
+    image: postgres:13
+    environment:
+      POSTGRES_DB: countdb
+      POSTGRES_USER: mary
+      POSTGRES_PASSWORD: 123456A!
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - webcounter-network
+    ports:
+      - "5432:5432"
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "mary", "-d", "countdb"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  webcounter-network:
+    driver: bridge
