@@ -2,9 +2,9 @@ FROM python:3.8-slim
 
 WORKDIR /app
 
-COPY ./app.py \
-     ./requirements.txt \
-     ./app/
+COPY app.py \
+     requirements.txt \
+     app/
 
 RUN apt-get update && \
     apt-get install -y gcc libssl-dev libpq-dev && \
