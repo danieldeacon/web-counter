@@ -2,14 +2,15 @@ FROM python:3.8-slim
 
 WORKDIR /app
 
-COPY app.py \
-     requirements.txt \
-     app/
+COPY requirements.txt .
 
 RUN apt-get update && \
     apt-get install -y gcc libssl-dev libpq-dev && \
-    rm -rf /var/lib/apt/lists/* && \
-    pip install --no-cache-dir -r requirements.txt
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app.py .
 
 ENV DB_NAME=countdb
 ENV DB_USER=mary
