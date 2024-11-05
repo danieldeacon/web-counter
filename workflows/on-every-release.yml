@@ -1,0 +1,4 @@
+# On every GitHub release:
+# Build and tag the Docker images with the release version tag
+# Push the images to your own Docker Hub account
+# Deploy your newly created images on an EC2 instance running the Web Counter app
