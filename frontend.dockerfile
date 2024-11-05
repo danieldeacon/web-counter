@@ -1,6 +1,6 @@
 FROM nginx:latest
 
-COPY /web-counter/index.html /usr/share/nginx/html/
+COPY ./index.html /usr/share/nginx/html/
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
