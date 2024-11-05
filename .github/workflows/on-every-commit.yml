@@ -29,8 +29,8 @@ jobs:
       # Run fake tests
       - name: Run fake tests
         run: |
-          pytest tests.py
-
+          python -m pytest tests.py 
+          
       # Build Docker images for the frontend and backend and tag them with the Git commit SHA
       - name: Log into DockerHub
         uses: docker/login-action@v3
