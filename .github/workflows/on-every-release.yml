@@ -74,7 +74,7 @@ jobs:
           run: terraform init
       
         - name: Terraform Plan
-          run: terraform plan -input=false -no-color
+          run: terraform plan -input=false -no-color -var="ec2_private_key=${{ secrets.EC2_KEY_PAIR }}"
 
         - name: Terraform Apply
           id: apply
