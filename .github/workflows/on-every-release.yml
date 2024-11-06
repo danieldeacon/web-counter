@@ -74,9 +74,7 @@ jobs:
           run: terraform init
       
         - name: Terraform Plan
-          env:
-            TF_VAR_ec2_private_key: ${{ secrets.EC2_PRIVATE_KEY }}
-          run: terraform plan
+          run: terraform plan -auto-approve
 
         - name: Terraform Apply
           id: apply
