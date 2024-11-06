@@ -1,8 +1,11 @@
 # Provider Configuration
 provider "aws" {
-  region     = "af-south-1"
-  access_key =  var.aws_access_key
-  secret_key = var.aws_secret_key
+  region = "af-south-1"
+}
+
+variable "ec2_private_key" {
+  description = "The name of the EC2 key pair to use"
+  type        = string
 }
 
 # Security Group
@@ -11,7 +14,6 @@ resource "aws_security_group" "webcounter_sg" {
   description = "Allow HTTP, SSH, and PostgreSQL access"
   vpc_id      = "vpc-00e5757e0834b17c4"
 
-  # Inbound rule for HTTP (port 80)
   ingress {
     from_port   = 80
     to_port     = 80
@@ -19,7 +21,6 @@ resource "aws_security_group" "webcounter_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Inbound rule for PostgreSQL (port 5432)
   ingress {
     from_port   = 5432
     to_port     = 5432
@@ -27,7 +28,6 @@ resource "aws_security_group" "webcounter_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Inbound rule for SSH (port 22)
   ingress {
     from_port   = 22
     to_port     = 22
@@ -35,7 +35,6 @@ resource "aws_security_group" "webcounter_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Outbound rule (Allow all outbound traffic)
   egress {
     from_port   = 0
     to_port     = 0
@@ -51,10 +50,15 @@ resource "aws_instance" "ci-cd-webcounter" {
   key_name      = var.ec2_private_key
   subnet_id     = "subnet-034e3d26503920841"
 
-  # Attach security group
   vpc_security_group_ids = [aws_security_group.webcounter_sg.id]
 
   tags = {
     Name = "ci-cd-webcounter"
   }
+}
+
+# Output EC2 Public IP
+output "ec2_public_ip" {
+  description = "The public IP of the EC2 instance"
+  value       = aws_instance.ci-cd-webcounter.public_ip
 }
