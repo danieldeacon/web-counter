@@ -47,7 +47,7 @@ resource "aws_security_group" "webcounter_sg" {
 resource "aws_instance" "ci-cd-webcounter" {
   ami           = "ami-0f256846cac23da94"
   instance_type = "t3.micro"
-  key_name      = var.ec2_private_key
+  key_name      = "myDefaultKeyPair"
   subnet_id     = "subnet-034e3d26503920841"
 
   vpc_security_group_ids = [aws_security_group.webcounter_sg.id]
