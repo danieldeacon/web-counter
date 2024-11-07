@@ -68,8 +68,8 @@ resource "aws_instance" "ci-cd-webcounter" {
   key_name      = var.ec2_private_key
   subnet_id     = "subnet-034e3d26503920841"
 
-  vpc_security_group_ids = length(data.aws_security_group.existing_sg.ids) > 0 ? 
-    [data.aws_security_group.existing_sg.id] : 
+  vpc_security_group_ids = length(data.aws_security_group.existing_sg.ids) > 0 ?
+    [data.aws_security_group.existing_sg.ids[0]] : 
     [aws_security_group.webcounter_sg[0].id]
 
   tags = {
@@ -81,6 +81,6 @@ resource "aws_instance" "ci-cd-webcounter" {
 output "ec2_public_ip" {
   description = "The public IP of the EC2 instance"
   value       = length(data.aws_instance.existing_instance.ids) > 0 ? 
-                data.aws_instance.existing_instance.public_ip : 
+                data.aws_instance.existing_instance[0].public_ip : 
                 aws_instance.ci-cd-webcounter[0].public_ip
 }
