@@ -3,7 +3,7 @@ provider "aws" {
   region = "af-south-1"
 }
 
-variable "ec2_key_private_key" {
+variable "ec2_private_key" {
   description = "The name of the EC2 key pair to use"
   type        = string
 }
