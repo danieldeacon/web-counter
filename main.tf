@@ -2,12 +2,12 @@
 provider "aws" {
   region = "af-south-1"
 }
-
+/*
 variable "ec2_private_key" {
   description = "The name of the EC2 key pair to use"
   type        = string
 }
-
+*/
 # Security Group
 resource "aws_security_group" "webcounter_sg" {
   name        = "ci-cd-webcounter-access"
