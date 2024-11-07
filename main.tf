@@ -8,7 +8,6 @@ variable "ec2_private_key" {
   type        = string
 }
 
-/*
 # Security Group
 resource "aws_security_group" "webcounter_sg" {
   name        = "ci-cd-webcounter-access"
@@ -43,7 +42,6 @@ resource "aws_security_group" "webcounter_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-*/
 
 # EC2 Instance
 resource "aws_instance" "ci-cd-webcounter" {
