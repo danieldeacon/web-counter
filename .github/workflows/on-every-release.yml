@@ -83,11 +83,12 @@ jobs:
             #TF_VAR_ec2_private_key: ${{ secrets.EC2_PRIVATE_KEY }}
           run: terraform apply -auto-approve
 
-        - name: Get EC2 IP
-          id: get_ip
-          run: |
-            echo "EC2_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
-        
+        - name: Set EC2 IP
+          run: echo "EC2_IP=$(terraform output -raw ec2_public_ip | sed 's/[^0-9.]//g')" >> $GITHUB_ENV
+
+        - name: Check Terraform IP Output
+          run: terraform output -raw ec2_public_ip
+
         - name: Connect to EC2 instance using SSH and Deploy
           uses: easingthemes/ssh-deploy@main
           with:
