@@ -84,11 +84,11 @@ jobs:
           run: terraform apply -auto-approve
 
         - name: Check Terraform IP Output
-          run: terraform output -raw ec2_public_ip
+          run: terraform output ec2_public_ip
 
         - name: Set EC2 IP
           id: get_ip
-          run: echo "EC2_IP=$(terraform output -raw ec2_public_ip | tr -d '\n')" >> $GITHUB_ENV
+          run: echo "EC2_IP=$(terraform output ec2_public_ip)" >> $GITHUB_ENV
   
         - name: Connect to EC2 instance using SSH and Deploy
           uses: easingthemes/ssh-deploy@main
