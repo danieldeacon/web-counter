@@ -85,13 +85,14 @@ jobs:
 
         - name: Get EC2 IP
           id: get_ip
-          run: echo "::set-output name=EC2_IP::$(terraform output -raw ec2_public_ip)"
-
+          run: |
+            echo "EC2_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
+        
         - name: Connect to EC2 instance using SSH and Deploy
           uses: easingthemes/ssh-deploy@main
           with:
             SSH_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
-            REMOTE_HOST: ${{ steps.get_ip.outputs.EC2_IP }}
+            REMOTE_HOST: ${{ env.EC2_IP }}
             REMOTE_USER: ubuntu
             SOURCE: "./docker-compose.yaml"
             TARGET: "~/"
