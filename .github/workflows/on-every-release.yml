@@ -91,10 +91,13 @@ jobs:
 
         - name: Set EC2 IP and destroy if valid IP
           id: get_ip
-          if: ${{ matches(env.EC2_IP, '^([0-9]{1,3}\\.){3}[0-9]{1,3}$') }}
           run: |
-              echo "IP ADDRESS: ${{ env.EC2_IP }}"
-              terraform destroy -auto-approve
+              if [[ "${{ env.EC2_IP }}" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+                echo "IP ADDRESS: ${{ env.EC2_IP }}"
+                terraform destroy -auto-approve
+              else
+                echo "Invalid IP address: ${{ env.EC2_IP }}"
+              fi
           
   
         - name: Connect to EC2 instance using SSH and Deploy
