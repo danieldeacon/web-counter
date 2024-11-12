@@ -85,13 +85,17 @@ jobs:
 
         - name: Check Terraform IP Output
           run: |
+            terraform output -raw ec2_public_ip
             echo "EC2_IP=$(terraform output -raw ec2_public_ip)" >> $GITHUB_ENV
             echo "The EC2 Public IP is: $EC2_IP"
 
-        - name: Set EC2 IP
+        - name: Set EC2 IP and destroy if valid IP
           id: get_ip
+          if: ${{ matches(env.EC2_IP, '^([0-9]{1,3}\\.){3}[0-9]{1,3}$') }}
           run: |
-            echo "IP ADDRESS: ${{ env.EC2_IP }}"
+              echo "IP ADDRESS: ${{ env.EC2_IP }}"
+              terraform destroy -auto-approve
+          
   
         - name: Connect to EC2 instance using SSH and Deploy
           uses: easingthemes/ssh-deploy@main
