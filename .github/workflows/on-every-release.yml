@@ -110,6 +110,10 @@ jobs:
               echo "EC2_IP=${EC2_IP}" | sed -n 'l'
               terraform destroy -auto-approve
             fi
+        
+        - name: Check Github env.
+          run: |
+            echo "EC2_IP: ${{ env.EC2_IP }}"
   
         - name: Connect to EC2 instance using SSH and Deploy
           uses: easingthemes/ssh-deploy@main
