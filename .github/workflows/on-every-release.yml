@@ -97,25 +97,17 @@ jobs:
             # Add the DNS address to GitHub Actions environment
             echo "EC2_IP=${EC2_IP}" >> $GITHUB_ENV
   
-        - name: Check Github env.
-          run: |
-            echo "EC2_IP: ${{ env.EC2_IP }}"
-            echo "${{ secrets.EC2_PRIVATE_KEY }}" >> myDefaultKeypair.pem
+        #- name: Check Github env.
+          #run: |
+            #echo "EC2_IP: ${{ env.EC2_IP }}"
+            #echo "${{ secrets.EC2_PRIVATE_KEY }}" >> myDefaultKeypair.pem
 
         - name: Connect to EC2 instance using SSH and Deploy
-          uses: easingthemes/ssh-deploy@main
-          with:
-            SSH_PRIVATE_KEY: myDefaultKeypair.pem
-            REMOTE_HOST: ${{ env.EC2_IP }}
-            REMOTE_USER: ubuntu
-            SOURCE: "./docker-compose.yaml"
-            TARGET: "~/"
-            SCRIPT_BEFORE: |
+          run: |
+              ssh -p 22 -i ${{ secrets.EC2_PRIVATE_KEY }} -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
               sudo apt-get update -y
               sudo apt-get install -y docker.io docker-compose
               # Replace placeholders in docker-compose.yaml
               sed -i "s|\${{ secrets.DOCKER_USERNAME }}|${{ secrets.DOCKER_USERNAME }}|g" ~/docker-compose.yaml
               sed -i "s|\${{ env.RELEASE_TAG }}|${{ env.RELEASE_TAG }}|g" ~/docker-compose.yaml
-            SCRIPT_AFTER: |
               sudo docker-compose -f ~/docker-compose.yaml up -d
-        
