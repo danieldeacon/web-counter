@@ -100,11 +100,12 @@ jobs:
         - name: Check Github env.
           run: |
             echo "EC2_IP: ${{ env.EC2_IP }}"
-  
+            echo "${{ secrets.EC2_PRIVATE_KEY }}" >> myDefaultKeypair.pem
+
         - name: Connect to EC2 instance using SSH and Deploy
           uses: easingthemes/ssh-deploy@main
           with:
-            SSH_PRIVATE_KEY: ${{ secrets.EC2_PRIVATE_KEY }}
+            SSH_PRIVATE_KEY: myDefaultKeypair.pem
             REMOTE_HOST: ${{ env.EC2_IP }}
             REMOTE_USER: ubuntu
             SOURCE: "./docker-compose.yaml"
