@@ -99,15 +99,15 @@ jobs:
             if [[ ! "${EC2_IP}" =~ ^ec2-[0-9]+-[0-9]+-[0-9]+\.([a-z]{2}-[a-z]+-\d{1,2})\.compute\.amazonaws\.com$ ]]; then
               echo "Failed to retrieve EC2 DNS. Destroying resources."
               terraform destroy -auto-approve
-              exit 1
-            else
-              echo "Extracted EC2 IP: ${EC2_IP}"
               # Debugging output to identify the actual value
               echo "EC2_IP=${EC2_IP}" | cat -A
               echo "EC2_IP=${EC2_IP}" | od -c
               echo "EC2_IP=${EC2_IP}" | hexdump -C
               echo "EC2_IP=${EC2_IP}" | sed -n 'l'
               terraform destroy -auto-approve
+              exit 1
+            else
+              echo "Extracted EC2 IP: ${EC2_IP}"
             fi
         - name: Check Github env.
           run: |
