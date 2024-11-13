@@ -87,7 +87,7 @@ jobs:
         - name: Check Terraform DNS Output
           run: |
             # Extract the DNS address
-            EC2_IP=$(terraform output -raw ec2_public_dns | grep -o 'ec2-.*\.compute\.amazonaws\.com')
+            EC2_IP=$(terraform output -raw ec2_public_dns | grep -o 'ec2-.*\.compute\.amazonaws\.com' | tr -d '\n')
             
             # Debugging: Print the extracted DNS address
             echo "Extracted EC2 DNS: ${EC2_IP}"
@@ -96,12 +96,11 @@ jobs:
             echo "EC2_IP=${EC2_IP}" >> $GITHUB_ENV
         
             # Validate that DNS is not empty
-            if [[ -z "${EC2_IP}" ]]; then
+            ifif [[ ! "${EC2_IP}" =~ ^ec2-[0-9]+-[0-9]+-[0-9]+\.([a-z]{2}-[a-z]+-[0-9]+)\.compute\.amazonaws\.com$ ]]; then
               echo "Failed to retrieve EC2 DNS. Destroying resources."
               terraform destroy -auto-approve
               exit 1
             else
-              echo "Valid EC2 DNS: ${EC2_IP}"
               echo "Extracted EC2 IP: ${EC2_IP}"
               echo "EC2_IP=${EC2_IP}" | cat -A
               echo "EC2_IP=${EC2_IP}" | od -c
