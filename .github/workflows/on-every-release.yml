@@ -87,7 +87,7 @@ jobs:
         - name: Check Terraform IP Output
           run: |
             # Extract the IP address and store it in the GitHub Actions environment variable
-            EC2_IP=$(terraform output -raw ec2_public_ip | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' | tr -d '[:space:][:cntrl:]') >> $GITHUB_ENV
+            EC2_IP=$(terraform output -raw ec2_public_ip | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -n 1 | tr -d '[:space:][:cntrl:]')
             
             # Debugging: Print the extracted IP address
             echo "Extracted EC2 IP: ${EC2_IP}"
