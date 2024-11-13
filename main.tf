@@ -58,7 +58,12 @@ resource "aws_instance" "ci-cd-webcounter" {
 }
 
 # Output EC2 Public IP
-output "ec2_public_ip" {
-  description = "The public IP of the EC2 instance"
-  value       = aws_instance.ci-cd-webcounter.public_ip
+# output "ec2_public_ip" {
+  #description = "The public IP of the EC2 instance"
+  #value       = aws_instance.ci-cd-webcounter.public_ip
+#}
+
+output "ec2_public_dns" {
+  description = "The public DNS of the EC2 instance"
+  value       = aws_instance.ci-cd-webcounter.public_dns
 }
