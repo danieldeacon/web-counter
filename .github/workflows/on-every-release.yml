@@ -51,6 +51,7 @@ jobs:
 
 
 # --------- Deploy the Docker images on an EC2 instance --------- #
+# https://spacelift.io/blog/terraform-remote-state
 
   deploy:
       needs: build-and-push
@@ -88,6 +89,9 @@ jobs:
             # Extract the IP address and store it in the GitHub Actions environment variable
             EC2_IP=$(terraform output -raw ec2_public_ip | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}')
             
+            # Debugging: Print the extracted IP address
+            echo "Extracted EC2 IP: ${EC2_IP}"
+            
             # Set the EC2_IP in the environment so it can be used later in other steps
             echo "EC2_IP=${EC2_IP}" >> $GITHUB_ENV
         
@@ -97,9 +101,15 @@ jobs:
             # Validate the IP using regex
             if [[ "${EC2_IP}" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
               echo "IP ADDRESS: ${EC2_IP}"
-              terraform destroy -auto-approve
             else
               echo "Invalid IP address: ${EC2_IP}"
+              EC2_IP=$(terraform output -raw ec2_public_ip | grep -oE '([0-9]{1,3}\.){3}[0-9]{1,3}')
+              echo "Extracted EC2 IP: ${EC2_IP}"
+              echo "EC2_IP=${EC2_IP}" | cat -A
+              echo "EC2_IP=${EC2_IP}" | od -c
+              echo "EC2_IP=${EC2_IP}" | hexdump -C
+              echo "EC2_IP=${EC2_IP}" | sed -n 'l'
+              terraform destroy -auto-approve
             fi
   
         - name: Connect to EC2 instance using SSH and Deploy
