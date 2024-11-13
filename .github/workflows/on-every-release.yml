@@ -87,7 +87,7 @@ jobs:
         - name: Check Terraform DNS Output
           run: |
             # Extract the DNS address
-            EC2_IP=$(terraform output -raw ec2_public_dns | sed 's/^\[command\]//')
+            EC2_IP=$(terraform output -raw ec2_public_dns | grep -o 'ec2-.*\.compute\.amazonaws\.com')
             
             # Debugging: Print the extracted DNS address
             echo "Extracted EC2 DNS: ${EC2_IP}"
