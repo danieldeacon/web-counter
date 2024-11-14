@@ -50,7 +50,6 @@ jobs:
 
 
 # --------- Deploy the Docker images on an EC2 instance --------- #
-# https://spacelift.io/blog/terraform-remote-state
 
   deploy:
       needs: build-and-push
@@ -75,12 +74,10 @@ jobs:
           run: terraform init
       
         - name: Terraform Plan
-          run: terraform plan -input=false -no-color # -var="ec2_private_key=${{ secrets.EC2_PRIVATE_KEY }}"
+          run: terraform plan -input=false -no-color
 
         - name: Terraform Apply
           id: apply
-          #env:
-            #TF_VAR_ec2_private_key: ${{ secrets.EC2_PRIVATE_KEY }}
           run: terraform apply -auto-approve
 
         - name: Check Terraform DNS Output
@@ -102,7 +99,19 @@ jobs:
             echo "${{ secrets.EC2_PRIVATE_KEY }}" > /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem
             ls
             chmod 600 myDefaultKeyPair.pem
-        - name: Connect to EC2 instance using SSH and Deploy
+            sleep 60
+
+        - name: Copy install script to EC2
           run: |
-              pwd
-              ssh -p 22 -vvv -tt -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
+            scp -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem /home/runner/work/web-counter/web-counter/setup.sh ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+            
+        - name: Copy docker-compose file to EC2
+          run: |
+            scp -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem /home/runner/work/web-counter/web-counter/docker-compose.yml ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+
+        - name: Export environment variables and run install script
+          run: |
+            ssh -vvv -i myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
+            "export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} && \
+            export RELEASE_TAG=${{ env.RELEASE_TAG }} && \
+            sudo bash /home/ubuntu/setup.sh"
