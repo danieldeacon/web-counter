@@ -99,14 +99,16 @@ jobs:
   
         - name: Check Github env.
           run: |
+            pwd
             echo "EC2_IP: ${{ env.EC2_IP }}"
-            echo "${{ secrets.EC2_PRIVATE_KEY }}" > myDefaultKeypair.pem
+            echo "${{ secrets.EC2_PRIVATE_KEY }}" > /home/runner/work/web-counter/web-counter/myDefaultKeypair.pem
+            ls
             chmod 600 myDefaultKeypair.pem
 
         - name: Connect to EC2 instance using SSH and Deploy
           run: |
               pwd
-              ssh -p 22 -i myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
+              ssh -p 22 -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
               sudo apt-get update -y
               sudo apt-get install -y docker.io docker-compose
               # Replace placeholders in docker-compose.yaml
