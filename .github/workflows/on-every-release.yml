@@ -108,7 +108,7 @@ jobs:
         - name: Connect to EC2 instance using SSH and Deploy
           run: |
               pwd
-              ssh -p 22 -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
+              ssh -p 22 -vvv -tt -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
               sudo apt-get update -y
               sudo apt-get install -y docker.io docker-compose
               # Replace placeholders in docker-compose.yaml
