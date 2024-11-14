@@ -22,7 +22,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
       - name: Log into DockerHub
         uses: docker/login-action@v3
         with:
@@ -87,7 +86,6 @@ jobs:
         - name: Check Terraform DNS Output
           run: |
             EC2_IP=$(terraform output -raw ec2_public_dns | grep -o 'ec2-.*\.compute\.amazonaws\.com' | head -n 1)
-
             # Trim any trailing whitespace or newline characters
             EC2_IP=$(echo "${EC2_IP}" | sed 's/[[:space:]\$]*$//')
   
@@ -104,69 +102,7 @@ jobs:
             echo "${{ secrets.EC2_PRIVATE_KEY }}" > /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem
             ls
             chmod 600 myDefaultKeyPair.pem
-
-        # - name: Ping EC2 instance until it is available
-        #   run: |
-        #       echo "Pinging EC2 instance  ${{ env.EC2_IP }}..."
-        #       until ping -c 1  ${{ env.EC2_IP }} &> /dev/null; do
-        #         echo "Waiting for EC2 instance  ${{ env.EC2_IP }} to become available..."
-        #         sleep 5
-        #       done
-        #       echo "EC2 instance  ${{ env.EC2_IP }} is now reachable!"
-
-        - name: Upload setup script to EC2 instance
+        - name: Connect to EC2 instance using SSH and Deploy
           run: |
-              scp -vvv -o StrictHostKeyChecking=no -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem ./setup.sh ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
-
-        - name: Run setup script on EC2 instance
-          run: |
-              ssh -vvv -o StrictHostKeyChecking=no -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
-              "export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} RELEASE_TAG=${{ env.RELEASE_TAG }} && bash ~/setup.sh"
-
-        # - name: Connect to EC2 instance using SSH and Deploy
-        #   run: |
-        #       pwd
-        #       ssh -p 22 -vvv -tt -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
-        #       sudo apt-get update -y
-        #       sudo apt-get install -y docker.io docker-compose
-        #       # Replace placeholders in docker-compose.yaml
-        #       sed -i "s|\${{ secrets.DOCKER_USERNAME }}|${{ secrets.DOCKER_USERNAME }}|g" ~/docker-compose.yaml
-        #       sed -i "s|\${{ env.RELEASE_TAG }}|${{ env.RELEASE_TAG }}|g" ~/docker-compose.yaml
-        #       sudo docker-compose -f ~/docker-compose.yaml up -d
-      
-          
-        # - name: Connect to EC2 instance using SSH and Deploy
-        #   run: |
-        #       pwd
-        #       ssh -p 22 -vvv -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }} << 'EOF'
-          
-        #         # Export GitHub secrets as environment variables
-        #         export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-        #         export RELEASE_TAG=${{ env.RELEASE_TAG }}
-          
-        #         # Install Docker and Docker Compose
-        #         sudo apt-get update -y
-        #         sudo apt-get install -y docker.io docker-compose
-          
-        #         # Download docker-compose.yaml file
-        #         wget https://raw.githubusercontent.com/${{ secrets.DOCKER_USERNAME }}/web-counter/main/docker-compose.yaml -O ~/docker-compose.yaml
-          
-        #         # Replace placeholders in docker-compose.yaml
-        #         sed -i "s|\${{ secrets.DOCKER_USERNAME }}|${DOCKER_USERNAME}|g" ~/docker-compose.yaml
-        #         sed -i "s|\${{ env.RELEASE_TAG }}|${RELEASE_TAG}|g" ~/docker-compose.yaml
-          
-        #         # Run Docker Compose
-        #         sudo docker-compose -f ~/docker-compose.yaml up -d
-          
-        #         # Wait for containers to be ready (check port 80)
-        #         echo "Waiting for containers to be ready..."
-                
-        #         # Test port 80 connectivity before continuing
-        #         until curl -s --head --request GET http://localhost:80 | grep "200 OK" > /dev/null; do
-        #           echo "Waiting for the application to be available on port 80..."
-        #           sleep 5
-        #         done
-          
-        #         echo "Application is up and running on port 80!"
-          
-        #       EOF
+              pwd
+              ssh -p 22 -vvv -tt -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
