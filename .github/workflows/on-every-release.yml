@@ -1,3 +1,5 @@
+#https://hub.docker.com/repository/docker/danieldeaconumuzi/ci-cd-webcounter-frontend/general
+
 name: Web-counter Release CI
 
 on:
@@ -103,15 +105,15 @@ jobs:
 
         - name: Copy install script to EC2
           run: |
-            scp -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem /home/runner/work/web-counter/web-counter/setup.sh ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+            scp -i ./myDefaultKeyPair.pem ./setup.sh ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
             
         - name: Copy docker-compose file to EC2
           run: |
-            scp -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem /home/runner/work/web-counter/web-counter/docker-compose.yml ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+            scp -i ./myDefaultKeyPair.pem ./docker-compose.yml ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
 
         - name: Export environment variables and run install script
           run: |
-            ssh -vvv -i myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
+            ssh -vvv -i ./myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
             "export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} && \
             export RELEASE_TAG=${{ env.RELEASE_TAG }} && \
             sudo bash /home/ubuntu/setup.sh"
