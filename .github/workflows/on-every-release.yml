@@ -85,13 +85,8 @@ jobs:
         - name: Check Terraform DNS Output
           run: |
             EC2_IP=$(terraform output -raw ec2_public_dns | grep -o 'ec2-.*\.compute\.amazonaws\.com' | head -n 1)
-            # Trim any trailing whitespace or newline characters
             EC2_IP=$(echo "${EC2_IP}" | sed 's/[[:space:]\$]*$//')
-  
-            # Debugging: Print the extracted DNS address
             echo "Extracted EC2 DNS: ${EC2_IP}"
-  
-            # Add the DNS address to GitHub Actions environment
             echo "EC2_IP=${EC2_IP}" >> $GITHUB_ENV
   
         - name: Check Github env.
@@ -101,19 +96,20 @@ jobs:
             echo "${{ secrets.EC2_PRIVATE_KEY }}" > /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem
             ls
             chmod 600 myDefaultKeyPair.pem
+            echo "Giving the instance a moment..."
             sleep 60
 
         - name: Copy install script to EC2
           run: |
-            scp -i ./myDefaultKeyPair.pem ./setup.sh ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+            scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ./setup.sh ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
             
         - name: Copy docker-compose file to EC2
           run: |
-            scp -i ./myDefaultKeyPair.pem ./docker-compose.yml ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+            scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ./docker-compose.yml ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
 
         - name: Export environment variables and run install script
           run: |
-            ssh -vvv -i ./myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
+            ssh -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
             "export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} && \
             export RELEASE_TAG=${{ env.RELEASE_TAG }} && \
             sudo bash /home/ubuntu/setup.sh"
