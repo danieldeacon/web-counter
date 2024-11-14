@@ -101,9 +101,9 @@ jobs:
           run: |
             pwd
             echo "EC2_IP: ${{ env.EC2_IP }}"
-            echo "${{ secrets.EC2_PRIVATE_KEY }}" > /home/runner/work/web-counter/web-counter/myDefaultKeypair.pem
+            echo "${{ secrets.EC2_PRIVATE_KEY }}" > /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem
             ls
-            chmod 600 myDefaultKeypair.pem
+            chmod 600 myDefaultKeyPair.pem
 
         - name: Connect to EC2 instance using SSH and Deploy
           run: |
