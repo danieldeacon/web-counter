@@ -1,6 +1,6 @@
 services:
   webcounter-backend:
-    image: ${{ secrets.DOCKER_USERNAME }}/ci-cd-webcounter-backend:${{ env.RELEASE_TAG }}
+    image: ${DOCKER_USERNAME}/ci-cd-webcounter-backend:${RELEASE_TAG}
     environment:
       DB_NAME: countdb
       DB_USER: mary
@@ -20,7 +20,7 @@ services:
       retries: 3 
 
   webcounter-frontend:
-    image: ${{ secrets.DOCKER_USERNAME }}/ci-cd-webcounter-frontend:${{ env.RELEASE_TAG }}
+    image: ${DOCKER_USERNAME}/ci-cd-webcounter-frontend:${RELEASE_TAG}
     depends_on:
       - webcounter-backend
       - webcounter-db

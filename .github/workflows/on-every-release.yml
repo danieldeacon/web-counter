@@ -107,11 +107,38 @@ jobs:
 
         - name: Connect to EC2 instance using SSH and Deploy
           run: |
-              pwd
-              ssh -p 22 -vvv -tt -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
-              sudo apt-get update -y
-              sudo apt-get install -y docker.io docker-compose
-              # Replace placeholders in docker-compose.yaml
-              sed -i "s|\${{ secrets.DOCKER_USERNAME }}|${{ secrets.DOCKER_USERNAME }}|g" ~/docker-compose.yaml
-              sed -i "s|\${{ env.RELEASE_TAG }}|${{ env.RELEASE_TAG }}|g" ~/docker-compose.yaml
-              sudo docker-compose -f ~/docker-compose.yaml up -d
+            pwd
+            ssh -p 22 -vvv -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }} << 'EOF'
+            
+            # Export GitHub secrets as environment variables
+            export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+            export RELEASE_TAG=${{ env.RELEASE_TAG }}
+
+            # Install Docker and Docker Compose
+            sudo apt-get update -y
+            sudo apt-get install -y docker.io docker-compose
+
+            # Download docker-compose.yaml file
+            wget https://raw.githubusercontent.com/${{ secrets.DOCKER_USERNAME }}/web-counter/main/docker-compose.yaml -O ~/docker-compose.yaml
+
+            # Replace placeholders in docker-compose.yaml
+            echo "$DOCKER_USERNAME" "$RELEASE_TAG"
+            sed -i "s|\${{ secrets.DOCKER_USERNAME }}|${DOCKER_USERNAME}|g" ~/docker-compose.yaml
+            sed -i "s|\${{ env.RELEASE_TAG }}|${RELEASE_TAG}|g" ~/docker-compose.yaml
+
+            # Run Docker Compose
+            sudo docker-compose -f ~/docker-compose.yaml up -d
+
+            # Wait for containers to be ready (check port 80)
+            echo "Waiting for containers to be ready..."
+            docker ps
+            
+            # Wait until the application is available on port 80 (adjust the port if needed)
+            until curl -s --head --request GET http://localhost:80 | grep "200 OK" > /dev/null; do
+            echo "Waiting for the application to be available on port 80..."
+              sleep 5
+            done
+
+            echo "Application is up and running on port 80!"
+
+            EOF
