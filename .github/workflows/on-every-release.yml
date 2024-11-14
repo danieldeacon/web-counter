@@ -114,16 +114,25 @@ jobs:
         #       done
         #       echo "EC2 instance  ${{ env.EC2_IP }} is now reachable!"
 
-        - name: Connect to EC2 instance using SSH and Deploy
+        - name: Upload setup script to EC2 instance
           run: |
-              pwd
-              ssh -p 22 -vvv -tt -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
-              sudo apt-get update -y
-              sudo apt-get install -y docker.io docker-compose
-              # Replace placeholders in docker-compose.yaml
-              sed -i "s|\${{ secrets.DOCKER_USERNAME }}|${{ secrets.DOCKER_USERNAME }}|g" ~/docker-compose.yaml
-              sed -i "s|\${{ env.RELEASE_TAG }}|${{ env.RELEASE_TAG }}|g" ~/docker-compose.yaml
-              sudo docker-compose -f ~/docker-compose.yaml up -d
+              scp -vvv -o StrictHostKeyChecking=no -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem ./setup.sh ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+
+        - name: Run setup script on EC2 instance
+          run: |
+              ssh -vvv -o StrictHostKeyChecking=no -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
+              "export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} RELEASE_TAG=${{ env.RELEASE_TAG }} && bash ~/setup.sh"
+
+        # - name: Connect to EC2 instance using SSH and Deploy
+        #   run: |
+        #       pwd
+        #       ssh -p 22 -vvv -tt -i /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
+        #       sudo apt-get update -y
+        #       sudo apt-get install -y docker.io docker-compose
+        #       # Replace placeholders in docker-compose.yaml
+        #       sed -i "s|\${{ secrets.DOCKER_USERNAME }}|${{ secrets.DOCKER_USERNAME }}|g" ~/docker-compose.yaml
+        #       sed -i "s|\${{ env.RELEASE_TAG }}|${{ env.RELEASE_TAG }}|g" ~/docker-compose.yaml
+        #       sudo docker-compose -f ~/docker-compose.yaml up -d
       
           
         # - name: Connect to EC2 instance using SSH and Deploy
