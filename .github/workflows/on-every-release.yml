@@ -100,10 +100,12 @@ jobs:
         - name: Check Github env.
           run: |
             echo "EC2_IP: ${{ env.EC2_IP }}"
-            echo "${{ secrets.EC2_PRIVATE_KEY }}" >> myDefaultKeypair.pem
+            echo "${{ secrets.EC2_PRIVATE_KEY }}" > myDefaultKeypair.pem
+            chmod 600 myDefaultKeypair.pem
 
         - name: Connect to EC2 instance using SSH and Deploy
           run: |
+              pwd
               ssh -p 22 -i myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
               sudo apt-get update -y
               sudo apt-get install -y docker.io docker-compose
