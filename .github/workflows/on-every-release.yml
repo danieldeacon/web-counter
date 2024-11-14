@@ -97,14 +97,14 @@ jobs:
             # Add the DNS address to GitHub Actions environment
             echo "EC2_IP=${EC2_IP}" >> $GITHUB_ENV
   
-        #- name: Check Github env.
-          #run: |
-            #echo "EC2_IP: ${{ env.EC2_IP }}"
-            #echo "${{ secrets.EC2_PRIVATE_KEY }}" >> myDefaultKeypair.pem
+        - name: Check Github env.
+          run: |
+            echo "EC2_IP: ${{ env.EC2_IP }}"
+            echo "${{ secrets.EC2_PRIVATE_KEY }}" >> myDefaultKeypair.pem
 
         - name: Connect to EC2 instance using SSH and Deploy
           run: |
-              ssh -p 22 -i ${{ secrets.EC2_PRIVATE_KEY }} -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
+              ssh -p 22 -i myDefaultKeyPair.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }}
               sudo apt-get update -y
               sudo apt-get install -y docker.io docker-compose
               # Replace placeholders in docker-compose.yaml
