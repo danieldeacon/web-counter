@@ -105,15 +105,15 @@ jobs:
             ls
             chmod 600 myDefaultKeyPair.pem
 
-        - name: Ping EC2 instance until it is available
-          run: |
-              echo "Pinging EC2 instance  ${{ env.EC2_IP }}..."
-              until ping -c 1  ${{ env.EC2_IP }} &> /dev/null; do
-                echo "Waiting for EC2 instance  ${{ env.EC2_IP }} to become available..."
-                sleep 5
-              done
-              echo "EC2 instance  ${{ env.EC2_IP }} is now reachable!"
-              
+        # - name: Ping EC2 instance until it is available
+        #   run: |
+        #       echo "Pinging EC2 instance  ${{ env.EC2_IP }}..."
+        #       until ping -c 1  ${{ env.EC2_IP }} &> /dev/null; do
+        #         echo "Waiting for EC2 instance  ${{ env.EC2_IP }} to become available..."
+        #         sleep 5
+        #       done
+        #       echo "EC2 instance  ${{ env.EC2_IP }} is now reachable!"
+
         - name: Connect to EC2 instance using SSH and Deploy
           run: |
               pwd
