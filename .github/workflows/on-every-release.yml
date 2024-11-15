@@ -63,7 +63,6 @@ jobs:
                   path: ./.env
                   include-hidden-files: true
 
-
     # --------- Deploy the Docker images on an EC2 instance --------- #
 
     deploy:
@@ -73,9 +72,9 @@ jobs:
             - name: Download .env file
               uses: actions/download-artifact@v3
               with:
-                name: docker-variables
-                path: ./.env
-                include-hidden-files: true
+                  name: docker-variables
+                  path: ./.env
+                  include-hidden-files: true
 
             - name: Check out the repo
               uses: actions/checkout@v3
@@ -149,17 +148,23 @@ jobs:
 
                   git remote set-url origin https://x-access-token:${{ secrets.TOKEN }}@github.com/${{ secrets.USER_NAME }}/${{ secrets.TERRAFORM_STATE_REPO }}.git
 
-                  git add terraform.tfstate
-                  git commit -m "Update terraform.tfstate file for ${{ env.RELEASE_TAG }}"
 
-                  if git push origin main; then
-                    echo "Terraform state successfully pushed to the repository."
-                    cd ..
+                  if git diff --quiet terraform.tfstate; then
+                    echo "No changes in terraform.tfstate file."
                   else
-                    echo "Failed to push Terraform state to the repository. Initiating Terraform destroy."
-                    terraform destroy -auto-approve
+                    git add terraform.tfstate
+                    git commit -m "Update terraform.tfstate file for deployment on $(date +'%Y-%m-%d_%H-%M-%S')"
+                    
+                    if git push origin main; then
+                      echo "Terraform state successfully pushed to the repository."
+                      cd ..
+                    else
+                      echo "Failed to push Terraform state to the repository. Initiating Terraform destroy."
                     exit 1
+
+                    fi
                   fi
+
               continue-on-error: false
 
             - name: Checking environment.
