@@ -33,7 +33,7 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 echo "-----COMPOSING CONTAINERS-----" | tee -a $LOG_FILE
 echo "Using backend image: ${DOCKER_USERNAME}/ci-cd-webcounter-backend:${RELEASE_TAG}" | tee -a $LOG_FILE
 echo "Using frontend image: ${DOCKER_USERNAME}/ci-cd-webcounter-frontend:${RELEASE_TAG}" | tee -a $LOG_FILE
-sudo docker-compose -f /home/ubuntu/docker-compose.yaml up -d >> $LOG_FILE 2>&1
+sudo docker compose -f /home/ubuntu/docker-compose.yaml up -d >> $LOG_FILE 2>&1
 
 echo "Waiting for containers to initialize..." | tee -a $LOG_FILE
 sleep 60
