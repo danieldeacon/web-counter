@@ -52,15 +52,14 @@ jobs:
 
             - name: Store image variables
               run: |
-                  echo "RELEASE_TAG=${{ env.RELEASE_TAG }}" >> ./.env
-                  echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> ./docker-variables.env
-                  pwd
+                  echo "RELEASE_TAG=${{ env.RELEASE_TAG }}" >> .env
+                  echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env
 
             - name: Upload .env file
               uses: actions/upload-artifact@v3
               with:
                   name: docker-variables
-                  path: docker-variables.env
+                  path: .env
                   include-hidden-files: true
 
     # --------- Deploy the Docker images on an EC2 instance --------- #
@@ -73,7 +72,7 @@ jobs:
               uses: actions/download-artifact@v3
               with:
                   name: docker-variables
-                  path: docker-variables.env
+                  path: .env
 
             - name: Check out the repo
               uses: actions/checkout@v3
@@ -109,8 +108,6 @@ jobs:
                     else
                       echo "Backup state file not found. A new one will be created and backed up."
                     fi
-
-                    ls -a
                     
                   else
                     echo "-----NO BACKUP REPOSITORY FOUND-----"
@@ -140,13 +137,13 @@ jobs:
               if: success()
               run: |
                   echo "-----BACKING UP INFRASTRUCTURE-----"
+                  pwd
+                  ls -a
                   cp ./terraform.tfstate ./${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate
                   cd ${{ secrets.TERRAFORM_STATE_REPO }}
                   git config --global user.email "${{ secrets.USER_EMAIL }}"
                   git config --global user.name "${{ secrets.USER_NAME }}"
-
                   git remote set-url origin https://x-access-token:${{ secrets.TOKEN }}@github.com/${{ secrets.USER_NAME }}/${{ secrets.TERRAFORM_STATE_REPO }}.git
-
 
                   if git diff --quiet terraform.tfstate; then
                     echo "No changes in terraform.tfstate file."
@@ -157,11 +154,15 @@ jobs:
                     if git push origin main; then
                       echo "Terraform state successfully pushed to the repository."
                     else
-                      echo "Failed to push Terraform state to the repository. Initiating Terraform destroy."
+                      echo "Failed to push Terraform state to the repository."
                     exit 1
 
                     fi
                   fi
+
+                  cd ..
+                  pwd
+                  ls -a
 
               continue-on-error: false
 
@@ -173,32 +174,29 @@ jobs:
                   echo "-----WAITING FOR EC2 TO BE READY-----"
                     sleep 60
                   echo "-----READY TO DEPLOY WEBCOUNTER WITH THE FOLLOWING DATA-----"
-                  echo "1) AWS EC2 Location: ${{ env.EC2_IP }}"
-                  echo "4) Frontend Image: ${{ secrets.DOCKER_USERNAME }}/ci-cd-webcounter-frontend:${{ env.RELEASE_TAG }}"
-                  echo "5) Backend Image: ${{ secrets.DOCKER_USERNAME }}/ci-cd-webcounter-backend:${{ env.RELEASE_TAG }}"
+                  echo "AWS EC2 Location: ${{ env.EC2_IP }}"
+                  cat .env
 
             - name: Copy the environment variables to EC2
               run: |
                   echo "-----COPYING ENVIRONMENT VARIABLES FILE-----"
                   pwd
-                  ls ..
-                  ls ...
-                  scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem docker-variables.env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
+                  scp -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem .env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
 
             - name: Copy install script to EC2
               run: |
                   echo "-----COPYING INSTALL FILE-----"
-                  scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ./setup.sh ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+                  scp -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ./setup.sh ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
 
             - name: Copy docker-compose file to EC2
               run: |
                   echo "-----COPYING DOCKER-COMPOSE FILE-----"
-                  scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ./docker-compose.yaml ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+                  scp -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ./docker-compose.yaml ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
 
             - name: Run install script
               run: |
                   echo "-----LOGGING INTO NEW EC2 INSTANCE-----"
-                  ssh -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
+                  ssh -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
                       "sudo bash /home/ubuntu/setup.sh; \
                     if [ $? -eq 0 ]; then \
                       echo "-----SETUP SUCCESSFUL-----"; \
