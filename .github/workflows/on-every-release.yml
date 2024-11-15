@@ -72,7 +72,7 @@ jobs:
               uses: actions/download-artifact@v3
               with:
                   name: docker-variables
-                  path: ./.env
+                  path: .env
                   include-hidden-files: true
 
             - name: Check out the repo
