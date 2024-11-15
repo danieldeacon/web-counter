@@ -60,8 +60,7 @@ jobs:
               uses: actions/upload-artifact@v3
               with:
                   name: docker-variables
-                  path: ./.env
-                  include-hidden-files: true
+                  path: .env
 
     # --------- Deploy the Docker images on an EC2 instance --------- #
 
