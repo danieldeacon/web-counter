@@ -3,114 +3,172 @@
 name: Web-counter Release CI
 
 on:
-  push:
-    branches:
-      - main
+    push:
+        branches:
+            - main
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
+    build-and-push:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout the source code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout the source code
+              uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.8"
+            - name: Setup Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.8"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      - name: Log into DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install -r requirements.txt
+            - name: Log into DockerHub
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKER_USERNAME }}
+                  password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set Docker image tags
-        id: vars
-        run: echo "RELEASE_TAG=${{ github.sha }}" >> $GITHUB_ENV #github.event.release.tag_name
+            - name: Set Docker image tags
+              id: vars
+              run: echo "RELEASE_TAG=${{ github.sha }}" >> $GITHUB_ENV #github.event.release.tag_name
 
-      - name: Build and push backend Docker image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: ./backend.dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-webcounter-backend:${{ env.RELEASE_TAG }}
+            - name: Build and push backend Docker image
+              uses: docker/build-push-action@v3
+              with:
+                  context: .
+                  file: ./backend.dockerfile
+                  push: true
+                  tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-webcounter-backend:${{ env.RELEASE_TAG }}
 
-      - name: Build and push frontend Docker image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: ./frontend.dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-webcounter-frontend:${{ env.RELEASE_TAG }}
+            - name: Build and push frontend Docker image
+              uses: docker/build-push-action@v3
+              with:
+                  context: .
+                  file: ./frontend.dockerfile
+                  push: true
+                  tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-webcounter-frontend:${{ env.RELEASE_TAG }}
 
+    # --------- Deploy the Docker images on an EC2 instance --------- #
 
-# --------- Deploy the Docker images on an EC2 instance --------- #
+    deploy:
+        needs: build-and-push
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check out the repo
+              uses: actions/checkout@v3
 
-  deploy:
-      needs: build-and-push
-      runs-on: ubuntu-latest
-      steps:
-        - name: Check out the repo
-          uses: actions/checkout@v3
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: af-south-1
 
-        - name: Configure AWS credentials
-          uses: aws-actions/configure-aws-credentials@v4
-          with:
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: af-south-1
-      
-        - name: Initialise Terraform
-          uses: hashicorp/setup-terraform@v2 
-          with:
-            terraform_version: 1.4.0
+            - name: Initialise Terraform
+              uses: hashicorp/setup-terraform@v2
+              with:
+                  terraform_version: 1.4.0
 
-        - name: Terraform Init
-          run: terraform init
-      
-        - name: Terraform Plan
-          run: terraform plan -input=false -no-color
+            - name: Terraform Init
+              run: terraform init
 
-        - name: Terraform Apply
-          id: apply
-          run: terraform apply -auto-approve
+            - name: Check if the state file exists
+              id: check_state
+              run: |
+                echo "-----CREATING INFRASTRUCTURE-----"
+                if [ -f ${{ secrets.TERRAFORM_STATE_REPO }} ]; then
+                  echo "Backup repository found."
+                  if [ -f ${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate ]; then
+                    echo "Backup state file found."
+                    echo "STATE_EXISTS=true" >> $GITHUB_ENV
+                  else
+                    echo "Backup state file not found."
+                    echo "STATE_EXISTS=false" >> $GITHUB_ENV
+                  fi
+                else
+                  echo "-----NO BACKUP REPOSITORY FOUND-----"
+                  echo "Please add your own backup repository in the secrets."
+                  echo "STATE_EXISTS=false" >> $GITHUB_ENV
+                  exit 1
+                fi
+              continue-on-error: false
 
-        - name: Check Terraform DNS Output
-          run: |
-            EC2_IP=$(terraform output -raw ec2_public_dns | grep -o 'ec2-.*\.compute\.amazonaws\.com' | head -n 1)
-            EC2_IP=$(echo "${EC2_IP}" | sed 's/[[:space:]\$]*$//')
-            echo "Extracted EC2 DNS: ${EC2_IP}"
-            echo "EC2_IP=${EC2_IP}" >> $GITHUB_ENV
-  
-        - name: Check Github env.
-          run: |
-            pwd
-            echo "RELEASE: ${{ env.RELEASE_TAG }}"
-            echo "EC2_IP: ${{ env.EC2_IP }}"
-            echo "${{ secrets.EC2_PRIVATE_KEY }}" > /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem
-            ls
-            chmod 600 myDefaultKeyPair.pem
-            echo "Giving the instance a moment..."
-            sleep 60
+            - name: Pull Terraform State (if exists)
+              if: env.STATE_EXISTS == 'true'
+              run: |
+                  cp ${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate ./terraform.tfstate
 
-        - name: Copy install script to EC2
-          run: |
-            scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ./setup.sh ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
-            
-        - name: Copy docker-compose file to EC2
-          run: |
-            scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ./docker-compose.yaml ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+            - name: Terraform Plan
+              run: terraform plan -input=false -no-color
 
-        - name: Export environment variables and run install script
-          run: |
-            ssh -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
-            "export DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} && \
-            export RELEASE_TAG=${{ env.RELEASE_TAG }} && \
-            sudo bash /home/ubuntu/setup.sh"
+            - name: Terraform Apply
+              id: apply
+              run: terraform apply -auto-approve
+
+            - name: Push Terraform State File to Repo
+              if: success()
+              run: |
+                "-----BACKING UP INFRASTRUCTURE-----"
+                cp ./terraform.tfstate ${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate
+                cd terraform-state
+                git config --global user.email "${{ secrets.USER_EMAIL }}"
+                git config --global user.name "${{ secrets.USER_NAME }}"
+                git add terraform.tfstate
+                git commit -m "Update terraform.tfstate file"
+                git push origin main
+
+            - name: Check Terraform DNS Output
+              run: |
+                  echo "-----EXTRACTING EC2 DNS-----"
+                  EC2_IP=$(terraform output -raw ec2_public_dns | grep -o 'ec2-.*\.compute\.amazonaws\.com' | head -n 1)
+                  EC2_IP=$(echo "${EC2_IP}" | sed 's/[[:space:]\$]*$//')
+                  echo "Extracted EC2 DNS: ${EC2_IP}"
+                  echo "EC2_IP=${EC2_IP}" >> $GITHUB_ENV
+
+            - name: Checking environment.
+              run: |
+                  echo "-----CREATING KEY-----"
+                  echo "${{ secrets.EC2_PRIVATE_KEY }}" > /home/runner/work/web-counter/web-counter/myDefaultKeyPair.pem
+                  chmod 600 myDefaultKeyPair.pem
+                  echo "-----WAITING FOR EC2 TO BE READY-----"
+                    sleep 60
+                  echo "-----READY TO DEPLOY WEBCOUNTER WITH THE FOLLOWING DATA-----"
+                  echo "1) AWS EC2 Location: ${{ env.EC2_IP }}"
+                  echo "4) Frontend Image: ${{ secrets.DOCKER_USERNAME }}/ci-cd-webcounter-frontend:${{ env.RELEASE_TAG }}"
+                  echo "5) Backend Image: ${{ secrets.DOCKER_USERNAME }}/ci-cd-webcounter-backend:${{ env.RELEASE_TAG }}"
+
+            - name: Copy the environment variables to EC2
+              run: |
+                  echo "-----COPYING ENVIRONMENT VARIABLES FILE-----"
+                  echo "RELEASE_TAG: ${{ env.RELEASE_TAG }}" >> .env
+                  echo "DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}" >> .env
+                  scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem .env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
+
+            - name: Copy install script to EC2
+              run: |
+                  echo "-----COPYING INSTALL FILE-----"
+                  scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ./setup.sh ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+
+            - name: Copy docker-compose file to EC2
+              run: |
+                  echo "-----COPYING DOCKER-COMPOSE FILE-----"
+                  scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ./docker-compose.yaml ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+
+            - name: Run install script
+              run: |
+                  echo "-----LOGGING INTO NEW EC2 INSTANCE-----"
+                  ssh -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
+                      "sudo bash /home/ubuntu/setup.sh; \
+                    if [ $? -eq 0 ]; then \
+                      echo "-----SETUP SUCCESSFUL-----"; \
+                    else \
+                      echo "-----SETUP UNSUCCESSFUL-----"; \
+                      cat ~/install_log.txt; \
+                      exit 1; \
+                    fi"
+
+                  if [ $? -ne 0 ]; then
+                    echo "-----DEPLOYMENT FAILED-----"
+                  fi
