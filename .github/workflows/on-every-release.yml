@@ -201,7 +201,7 @@ jobs:
                       echo "-----SETUP SUCCESSFUL-----"; \
                     else \
                       echo "-----SETUP UNSUCCESSFUL-----"; \
-                      cat ~/install_log.txt; \
+                      cat /home/ubuntu/install_log.txt; \
                       exit 1; \
                     fi"
 

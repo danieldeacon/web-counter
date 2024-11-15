@@ -1,3 +1,5 @@
 venv
 .terraform.lock.hcl
 /.terraform
+terraform.tfstate
+web-counter-terraform-state
