@@ -79,14 +79,11 @@ jobs:
               run: |
                   echo "-----CHECKING FOR BACKUP REPOSITORY AND STATE FILE-----"
 
-                  # Check if the backup repository exists
                   if git ls-remote https://github.com/${{ secrets.USER_NAME }}/${{ secrets.TERRAFORM_STATE_REPO }}.git &>/dev/null; then
                     echo "Backup repository found."
                     
-                    # Clone the repository
                     git clone https://github.com/${{ secrets.USER_NAME }}/${{ secrets.TERRAFORM_STATE_REPO }}.git 
                     
-                    # Check if the terraform.tfstate file exists in the cloned repo
                     if [ -f ./${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate ]; then
                       echo "Backup state file found."
                       cp ./${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate ./terraform.tfstate
@@ -126,6 +123,9 @@ jobs:
                   cd ${{ secrets.TERRAFORM_STATE_REPO }}
                   git config --global user.email "${{ secrets.USER_EMAIL }}"
                   git config --global user.name "${{ secrets.USER_NAME }}"
+
+                  git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ secrets.USER_NAME }}/${{ secrets.TERRAFORM_STATE_REPO }}.git
+
                   git add terraform.tfstate
                   git commit -m "Update terraform.tfstate file for ${{ env.RELEASE_TAG }}"
 
