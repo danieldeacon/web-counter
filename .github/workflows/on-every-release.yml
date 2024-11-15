@@ -195,7 +195,7 @@ jobs:
             - name: Run install script
               run: |
                   echo "-----LOGGING INTO NEW EC2 INSTANCE-----"
-                  ssh -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
+                  ssh -o StrictHostKeyChecking=no -i -v ./myDefaultKeyPair.pem ubuntu@${{ env.EC2_IP }} \
                       "sudo bash /home/ubuntu/setup.sh; \
                     if [ $? -eq 0 ]; then \
                       echo "-----SETUP SUCCESSFUL-----"; \
