@@ -175,13 +175,12 @@ jobs:
                     sleep 60
                   echo "-----READY TO DEPLOY WEBCOUNTER WITH THE FOLLOWING DATA-----"
                   echo "AWS EC2 Location: ${{ env.EC2_IP }}"
-                  cat .env
+                  cat /home/runner/work/web-counter/web-counter/.env
 
             - name: Copy the environment variables to EC2
               run: |
                   echo "-----COPYING ENVIRONMENT VARIABLES FILE-----"
-                  pwd
-                  scp -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem .env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
+                  scp -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem /home/runner/work/web-counter/web-counter/.env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
 
             - name: Copy install script to EC2
               run: |
