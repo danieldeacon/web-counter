@@ -39,15 +39,19 @@ echo "Waiting for containers to initialize..." | tee -a $LOG_FILE
 sleep 60
 
 echo "-----TESTING APPLICATION-----" | tee -a $LOG_FILE
-if curl --output /dev/null --silent --head --fail http://localhost:80/api/pressed; then
+
+echo $(curl http://localhost:80) | tee -a $LOG_FILE
+echo $(curl http://localhost:80/api/pressed) | tee -a $LOG_FILE
+STATUS_CODE=$(curl --silent --output /dev/null --write-out "%{http_code}" http://localhost:80/api/pressed)
+echo "Status Code: $STATUS_CODE" | tee -a $LOG_FILE
+
+if [ "$STATUS_CODE" -eq 200 ]; then
     echo "-----WEBCOUNTER ACTIVE-----" | tee -a $LOG_FILE
-    echo $(curl http://localhost:80/api/pressed) | tee -a $LOG_FILE
     echo "-----REMOVING VARIABLES-----"
     rm -f /home/ubuntu/.env
     exit 0
 else
-    echo "-----WEBCOUNTER INACTIVE-----" | tee -a $LOG_FILE
-    echo "Check the log file $LOG_FILE for details." | tee -a $LOG_FILE
+    echo "Error: Webcounter is not active. Status code: $STATUS_CODE" | tee -a $LOG_FILE
     exit 1
 fi
 
