@@ -74,6 +74,8 @@ jobs:
               uses: actions/download-artifact@v3
               with:
                 name: docker-variables
+                path: ./.env
+                include-hidden-files: true
 
             - name: Check out the repo
               uses: actions/checkout@v3
@@ -109,6 +111,8 @@ jobs:
                     else
                       echo "Backup state file not found. A new one will be created and backed up."
                     fi
+
+                    ls -a
                     
                   else
                     echo "-----NO BACKUP REPOSITORY FOUND-----"
