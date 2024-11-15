@@ -118,18 +118,26 @@ jobs:
                   echo "Extracted EC2 DNS: ${EC2_IP}"
                   echo "EC2_IP=${EC2_IP}" >> $GITHUB_ENV
 
-            - name: Push Terraform State File to Repo
-              if: success()
-              run: |
-                "-----BACKING UP INFRASTRUCTURE-----"
-                cp ./terraform.tfstate ./${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate
-                cd ${{ secrets.TERRAFORM_STATE_REPO }}
-                git config --global user.email "${{ secrets.USER_EMAIL }}"
-                git config --global user.name "${{ secrets.USER_NAME }}"
-                git add terraform.tfstate
-                git commit -m "Update terraform.tfstate file for ${{ env.RELEASE_TAG }}"
-                git push origin main
-                cd ..
+                  - name: Push Terraform State File to Repo
+                  if: success()
+                  run: |
+                    echo "-----BACKING UP INFRASTRUCTURE-----"
+                    cp ./terraform.tfstate ./${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate
+                    cd ${{ secrets.TERRAFORM_STATE_REPO }}
+                    git config --global user.email "${{ secrets.USER_EMAIL }}"
+                    git config --global user.name "${{ secrets.USER_NAME }}"
+                    git add terraform.tfstate
+                    git commit -m "Update terraform.tfstate file for ${{ env.RELEASE_TAG }}"
+                    
+                    if git push origin main; then
+                      echo "Terraform state successfully pushed to the repository."
+                      cd ..
+                    else
+                      echo "Failed to push Terraform state to the repository. Initiating Terraform destroy."
+                      terraform destroy -auto-approve
+                      exit 1
+                    fi 
+              continue-on-error: false   
 
             - name: Checking environment.
               run: |
