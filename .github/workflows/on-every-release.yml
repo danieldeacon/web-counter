@@ -181,7 +181,7 @@ jobs:
             - name: Copy the environment variables to EC2
               run: |
                   echo "-----COPYING ENVIRONMENT VARIABLES FILE-----"
-                  scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem .env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
+                  scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ../.env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
 
             - name: Copy install script to EC2
               run: |
