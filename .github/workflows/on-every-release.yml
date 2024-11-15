@@ -68,17 +68,6 @@ jobs:
         needs: build-and-push
         runs-on: ubuntu-latest
         steps:
-            - name: Download .env file
-              uses: actions/download-artifact@v3
-              with:
-                  name: docker-variables
-                  path: ./
-
-            - name: Check if env exists
-              run: |
-                ls -al /home/runner/work/web-counter/web-counter/
-
-
             - name: Check out the repo
               uses: actions/checkout@v3
 
@@ -171,6 +160,12 @@ jobs:
 
               continue-on-error: false
 
+            - name: Download .env file
+              uses: actions/download-artifact@v3
+              with:
+                  name: docker-variables
+                  path: ./
+
             - name: Checking environment.
               run: |
                   echo "-----CREATING KEY-----"
@@ -180,12 +175,12 @@ jobs:
                     sleep 60
                   echo "-----READY TO DEPLOY WEBCOUNTER WITH THE FOLLOWING DATA-----"
                   echo "AWS EC2 Location: ${{ env.EC2_IP }}"
-                  cat /home/runner/work/web-counter/web-counter/.env
+                  cat .env
 
             - name: Copy the environment variables to EC2
               run: |
                   echo "-----COPYING ENVIRONMENT VARIABLES FILE-----"
-                  scp -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem /home/runner/work/web-counter/web-counter/.env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
+                  scp -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem .env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
 
             - name: Copy install script to EC2
               run: |
