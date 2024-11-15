@@ -53,14 +53,14 @@ jobs:
             - name: Store image variables
               run: |
                   echo "RELEASE_TAG=${{ env.RELEASE_TAG }}" >> ./.env
-                  echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> ./.env
+                  echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> ./docker-variables.env
                   pwd
 
             - name: Upload .env file
               uses: actions/upload-artifact@v3
               with:
                   name: docker-variables
-                  path: .env
+                  path: docker-variables.env
                   include-hidden-files: true
 
     # --------- Deploy the Docker images on an EC2 instance --------- #
@@ -73,7 +73,7 @@ jobs:
               uses: actions/download-artifact@v3
               with:
                   name: docker-variables
-                  path: .env
+                  path: docker-variables.env
 
             - name: Check out the repo
               uses: actions/checkout@v3
@@ -181,7 +181,7 @@ jobs:
             - name: Copy the environment variables to EC2
               run: |
                   echo "-----COPYING ENVIRONMENT VARIABLES FILE-----"
-                  scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ../.env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
+                  scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem docker-variables.env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
 
             - name: Copy install script to EC2
               run: |
