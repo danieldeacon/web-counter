@@ -54,12 +54,15 @@ jobs:
               run: |
                   echo "RELEASE_TAG=${{ env.RELEASE_TAG }}" >> ./.env
                   echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> ./.env
+                  pwd
 
             - name: Upload .env file
               uses: actions/upload-artifact@v3
               with:
                   name: docker-variables
                   path: ./.env
+                  include-hidden-files: true
+
 
     # --------- Deploy the Docker images on an EC2 instance --------- #
 
