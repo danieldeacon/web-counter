@@ -77,29 +77,29 @@ jobs:
             - name: Check if the state file and repository exists
               id: check_state
               run: |
-                echo "-----CHECKING FOR BACKUP REPOSITORY AND STATE FILE-----"
-                
-                # Check if the backup repository exists
-                if git ls-remote https://github.com/${{ secrets.USER_NAME }}/${{ secrets.TERRAFORM_STATE_REPO }}.git &>/dev/null; then
-                  echo "Backup repository found."
-                  
-                  # Clone the repository
-                  git clone https://github.com/${{ secrets.USER_NAME }}/${{ secrets.TERRAFORM_STATE_REPO }}.git 
-                  
-                  # Check if the terraform.tfstate file exists in the cloned repo
-                  if [ -f ./${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate ]; then
-                    echo "Backup state file found."
-                    cp ./${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate ./terraform.tfstate
+                  echo "-----CHECKING FOR BACKUP REPOSITORY AND STATE FILE-----"
+
+                  # Check if the backup repository exists
+                  if git ls-remote https://github.com/${{ secrets.USER_NAME }}/${{ secrets.TERRAFORM_STATE_REPO }}.git &>/dev/null; then
+                    echo "Backup repository found."
+                    
+                    # Clone the repository
+                    git clone https://github.com/${{ secrets.USER_NAME }}/${{ secrets.TERRAFORM_STATE_REPO }}.git 
+                    
+                    # Check if the terraform.tfstate file exists in the cloned repo
+                    if [ -f ./${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate ]; then
+                      echo "Backup state file found."
+                      cp ./${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate ./terraform.tfstate
+                    else
+                      echo "Backup state file not found. A new one will be created and backed up."
+                    fi
+                    
                   else
-                    echo "Backup state file not found. A new one will be created and backed up."
+                    echo "-----NO BACKUP REPOSITORY FOUND-----"
+                    echo "Please add your own backup repository in the secrets."
+                    echo "STATE_EXISTS=false" >> $GITHUB_ENV
+                    exit 1
                   fi
-                  
-                else
-                  echo "-----NO BACKUP REPOSITORY FOUND-----"
-                  echo "Please add your own backup repository in the secrets."
-                  echo "STATE_EXISTS=false" >> $GITHUB_ENV
-                  exit 1
-                fi
 
               continue-on-error: false
 
@@ -109,7 +109,7 @@ jobs:
             - name: Terraform Apply
               id: apply
               run: terraform apply -auto-approve
-            
+
             - name: Check Terraform DNS Output
               run: |
                   echo "-----EXTRACTING EC2 DNS-----"
@@ -118,26 +118,26 @@ jobs:
                   echo "Extracted EC2 DNS: ${EC2_IP}"
                   echo "EC2_IP=${EC2_IP}" >> $GITHUB_ENV
 
-                  - name: Push Terraform State File to Repo
-                  if: success()
-                  run: |
-                    echo "-----BACKING UP INFRASTRUCTURE-----"
-                    cp ./terraform.tfstate ./${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate
-                    cd ${{ secrets.TERRAFORM_STATE_REPO }}
-                    git config --global user.email "${{ secrets.USER_EMAIL }}"
-                    git config --global user.name "${{ secrets.USER_NAME }}"
-                    git add terraform.tfstate
-                    git commit -m "Update terraform.tfstate file for ${{ env.RELEASE_TAG }}"
-                    
-                    if git push origin main; then
-                      echo "Terraform state successfully pushed to the repository."
-                      cd ..
-                    else
-                      echo "Failed to push Terraform state to the repository. Initiating Terraform destroy."
-                      terraform destroy -auto-approve
-                      exit 1
-                    fi 
-              continue-on-error: false   
+            - name: Push Terraform State File to Repo
+              if: success()
+              run: |
+                  echo "-----BACKING UP INFRASTRUCTURE-----"
+                  cp ./terraform.tfstate ./${{ secrets.TERRAFORM_STATE_REPO }}/terraform.tfstate
+                  cd ${{ secrets.TERRAFORM_STATE_REPO }}
+                  git config --global user.email "${{ secrets.USER_EMAIL }}"
+                  git config --global user.name "${{ secrets.USER_NAME }}"
+                  git add terraform.tfstate
+                  git commit -m "Update terraform.tfstate file for ${{ env.RELEASE_TAG }}"
+
+                  if git push origin main; then
+                    echo "Terraform state successfully pushed to the repository."
+                    cd ..
+                  else
+                    echo "Failed to push Terraform state to the repository. Initiating Terraform destroy."
+                    terraform destroy -auto-approve
+                    exit 1
+                  fi
+              continue-on-error: false
 
             - name: Checking environment.
               run: |
