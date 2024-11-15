@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LOG_FILE=~/install_log.txt
+LOG_FILE=/home/ubuntu/install_log.txt
 
 if [ -f /home/ubuntu/.env ]; then
     echo "Sourcing environment variables from .env file..." | tee -a $LOG_FILE
