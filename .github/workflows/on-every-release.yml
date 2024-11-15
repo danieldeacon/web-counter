@@ -72,7 +72,12 @@ jobs:
               uses: actions/download-artifact@v3
               with:
                   name: docker-variables
-                  path: .env
+                  path: ./
+
+            - name: Check if env exists
+              run: |
+                ls -al /home/runner/work/web-counter/web-counter/
+
 
             - name: Check out the repo
               uses: actions/checkout@v3
