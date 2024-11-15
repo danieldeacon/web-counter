@@ -156,7 +156,6 @@ jobs:
                     
                     if git push origin main; then
                       echo "Terraform state successfully pushed to the repository."
-                      cd ..
                     else
                       echo "Failed to push Terraform state to the repository. Initiating Terraform destroy."
                     exit 1
