@@ -181,6 +181,9 @@ jobs:
             - name: Copy the environment variables to EC2
               run: |
                   echo "-----COPYING ENVIRONMENT VARIABLES FILE-----"
+                  pwd
+                  ls ..
+                  ls ...
                   scp -vvv -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem docker-variables.env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
 
             - name: Copy install script to EC2
