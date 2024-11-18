@@ -38,7 +38,7 @@ jobs:
 
       - name: Run fake tests
         run: |
-          python -m tests.py 
+          python tests.py 
 
       - name: Log into DockerHub
         uses: docker/login-action@v3
