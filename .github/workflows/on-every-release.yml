@@ -1,11 +1,25 @@
-#https://hub.docker.com/repository/docker/danieldeaconumuzi/ci-cd-webcounter-frontend/general
+# --------- PRE-REQUISITES TO RUN WORKFLOW --------- #
 
-name: Web-counter Release CI
+#Store the following in Github Secrets:
+
+# DOCKER_USERNAME - your dockerhub username
+# DOCKER_PASSWORD - your dockerhub password
+# AWS_ACCESS_KEY_ID - your aws access key for programmatic access
+# AWS_SECRET_ACCESS_KEY - your aws secret key for programmatic access
+# USER_NAME - your github username
+# USER_EMAIL - your github email
+# TOKEN - your github token to allow Github Actions read/write
+# TERRAFORM_STATE_REPO - the name of your terraform state GitHub repository (Not ideal in real world, but it works for this demo)
+# EC2_PRIVATE_KEY - the name of your EC2 private key
+
+# --------- PRE-REQUISITES TO RUN WORKFLOW --------- #
+
+name: Web-counter Release CD
 
 on:
-    push:
-        branches:
-            - main
+  release:
+      types:
+          - published
 
 jobs:
     build-and-push:
@@ -32,7 +46,9 @@ jobs:
 
             - name: Set Docker image tags
               id: vars
-              run: echo "RELEASE_TAG=${{ github.sha }}" >> $GITHUB_ENV #github.event.release.tag_name
+              run: echo "RELEASE_TAG=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+
+# --------- DOCKER IMAGE LOCATION: https://hub.docker.com/repository/docker/danieldeaconumuzi/ --------- #
 
             - name: Build and push backend Docker image
               uses: docker/build-push-action@v3
@@ -42,6 +58,7 @@ jobs:
                   push: true
                   tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-webcounter-backend:${{ env.RELEASE_TAG }}
 
+
             - name: Build and push frontend Docker image
               uses: docker/build-push-action@v3
               with:
@@ -50,10 +67,12 @@ jobs:
                   push: true
                   tags: ${{ secrets.DOCKER_USERNAME }}/ci-cd-webcounter-frontend:${{ env.RELEASE_TAG }}
 
+
             - name: Store image variables
               run: |
                   echo "RELEASE_TAG=${{ env.RELEASE_TAG }}" >> .env
                   echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> .env
+
 
             - name: Upload .env file
               uses: actions/upload-artifact@v3
@@ -62,14 +81,19 @@ jobs:
                   path: .env
                   include-hidden-files: true
 
-    # --------- Deploy the Docker images on an EC2 instance --------- #
+
+# --------- Deploy the Docker images on an EC2 instance --------- #
+
 
     deploy:
         needs: build-and-push
         runs-on: ubuntu-latest
         steps:
+
+
             - name: Check out the repo
               uses: actions/checkout@v3
+
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4
@@ -78,13 +102,17 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: af-south-1
 
+
             - name: Initialise Terraform
               uses: hashicorp/setup-terraform@v2
               with:
                   terraform_version: 1.4.0
+                  
 
             - name: Terraform Init
               run: terraform init
+
+# --------- TFSTATE LOCATION: https://github.com/danieldeacon/web-counter-terraform-state --------- #
 
             - name: Check if the state file and repository exists
               id: check_state
@@ -109,15 +137,18 @@ jobs:
                     echo "STATE_EXISTS=false" >> $GITHUB_ENV
                     exit 1
                   fi
-
+                  
               continue-on-error: false
+
 
             - name: Terraform Plan
               run: terraform plan -input=false -no-color
 
+
             - name: Terraform Apply
               id: apply
               run: terraform apply -auto-approve
+
 
             - name: Check Terraform DNS Output
               run: |
@@ -126,6 +157,7 @@ jobs:
                   EC2_IP=$(echo "${EC2_IP}" | sed 's/[[:space:]\$]*$//')
                   echo "Extracted EC2 DNS: ${EC2_IP}"
                   echo "EC2_IP=${EC2_IP}" >> $GITHUB_ENV
+
 
             - name: Push Terraform State File to Repo
               if: success()
@@ -160,11 +192,13 @@ jobs:
 
               continue-on-error: false
 
+
             - name: Download .env file
               uses: actions/download-artifact@v3
               with:
                   name: docker-variables
                   path: ./
+
 
             - name: Checking environment.
               run: |
@@ -177,20 +211,24 @@ jobs:
                   echo "AWS EC2 Location: ${{ env.EC2_IP }}"
                   cat .env
 
+
             - name: Copy the environment variables to EC2
               run: |
                   echo "-----COPYING ENVIRONMENT VARIABLES FILE-----"
                   scp -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem .env ubuntu@${{ env.EC2_IP }}:/home/ubuntu/.env
+
 
             - name: Copy install script to EC2
               run: |
                   echo "-----COPYING INSTALL FILE-----"
                   scp -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ./setup.sh ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
 
+
             - name: Copy docker-compose file to EC2
               run: |
                   echo "-----COPYING DOCKER-COMPOSE FILE-----"
                   scp -o StrictHostKeyChecking=no -i ./myDefaultKeyPair.pem ./docker-compose.yaml ubuntu@${{ env.EC2_IP }}:/home/ubuntu/
+
 
             - name: Run install script
               run: |

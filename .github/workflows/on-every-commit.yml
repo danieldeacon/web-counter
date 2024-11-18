@@ -1,9 +1,19 @@
+
+# --------- PRE-REQUISITES TO RUN WORKFLOW --------- #
+
+#Store the following in Github Secrets:
+
+# DOCKER_USERNAME - your dockerhub username
+# DOCKER_PASSWORD - your dockerhub password
+
+# --------- PRE-REQUISITES TO RUN WORKFLOW --------- #
+
 name: Web-counter CI
 
 on:
-  #push:
-   # branches:
-    #  - main
+  push:
+    branches:
+      - main
 
 jobs:
   build:

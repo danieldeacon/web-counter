@@ -1,14 +1,7 @@
-# Provider Configuration
 provider "aws" {
   region = "af-south-1"
 }
-/*
-variable "ec2_private_key" {
-  description = "The name of the EC2 key pair to use"
-  type        = string
-}
-*/
-# Security Group
+
 resource "aws_security_group" "webcounter_sg" {
   name        = "ci-cd-webcounter-access"
   description = "Allow HTTP, SSH, and PostgreSQL access"
@@ -43,7 +36,6 @@ resource "aws_security_group" "webcounter_sg" {
   }
 }
 
-# EC2 Instance
 resource "aws_instance" "ci-cd-webcounter" {
   ami           = "ami-0f256846cac23da94"
   instance_type = "t3.micro"
@@ -56,12 +48,6 @@ resource "aws_instance" "ci-cd-webcounter" {
     Name = "ci-cd-webcounter"
   }
 }
-
-# Output EC2 Public IP
-# output "ec2_public_ip" {
-  #description = "The public IP of the EC2 instance"
-  #value       = aws_instance.ci-cd-webcounter.public_ip
-#}
 
 output "ec2_public_dns" {
   description = "The public DNS of the EC2 instance"
